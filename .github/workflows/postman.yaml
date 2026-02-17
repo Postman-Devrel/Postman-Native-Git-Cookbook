@@ -1,4 +1,4 @@
-name: Publish to Postman Workspace
+name: Postman Workflow Template
 
 on:
   push:
@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  postman:
+  lint-and-test:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -16,17 +16,43 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: "20"
-          cache: "yarn"
+          cache: "npm"
 
-      - run: curl -o- "https://dl-cli.pstmn.io/install/unix.sh" | sh
+      - name: Install dependencies
+        run: npm ci
 
-      - name: Validate and sync
-        env:
-          POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
-        run: |
-          postman login --with-api-key "$POSTMAN_API_KEY"
-          yarn install --frozen-lockfile
-          yarn start &
-          sleep 3
-          yarn test:api
-          postman workspace push -y
+      - name: Install Postman CLI
+        run: curl -o- "https://dl-cli.pstmn.io/install/unix.sh" | sh
+
+      - name: Lint Postman collections with Spectral
+        run: npm run lint:collections
+
+      # TEMPLATE: Customize the steps below for your project
+
+      # - name: Run your tests
+      #   run: npm test
+
+      # - name: Start your API server
+      #   run: |
+      #     npm start &
+      #     sleep 5
+
+      # - name: Run Postman collections
+      #   env:
+      #     POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+      #   run: |
+      #     postman login --with-api-key "$POSTMAN_API_KEY"
+      #     for collection in postman/collections/*.postman_collection.json; do
+      #       postman collection run "$collection"
+      #     done
+
+      # - name: Publish to Postman workspace (optional)
+      #   if: github.ref == 'refs/heads/main'
+      #   env:
+      #     POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+      #   run: |
+      #     postman login --with-api-key "$POSTMAN_API_KEY"
+      #     postman workspace push -y
+
+      - name: Success
+        run: echo "✅ Workflow completed! Customize this template for your project."

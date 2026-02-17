@@ -1,30 +1,37 @@
-name: Run Postman Collections
+name: Run Postman Collections (Template)
+
+# This is a TEMPLATE workflow. Customize it for your project.
+# See docs/CI_CD.md for detailed instructions.
 
 on:
   pull_request:
     branches: [main, develop]
   push:
     branches: [main, develop]
-  workflow_dispatch:  # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
-  test-collections:
-    name: Test Collections
+  run-collections:
+    name: Run Postman Collections
     runs-on: ubuntu-latest
 
-    strategy:
-      matrix:
-        node-version: [18, 20]
-      fail-fast: false
+    # TEMPLATE: Uncomment to test on multiple Node versions
+    # strategy:
+    #   matrix:
+    #     node-version: [18, 20]
+    #   fail-fast: false
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Node.js ${{ matrix.node-version }}
+      - name: Setup Node.js
+        # uses: actions/setup-node@v4
+        # with:
+        #   node-version: ${{ matrix.node-version }}
         uses: actions/setup-node@v4
         with:
-          node-version: ${{ matrix.node-version }}
+          node-version: '20'
           cache: 'npm'
 
       - name: Install dependencies
@@ -33,24 +40,25 @@ jobs:
       - name: Install Postman CLI
         run: curl -o- "https://dl-cli.pstmn.io/install/unix.sh" | sh
 
-      - name: Run unit and integration tests
-        run: npm test
+      # TEMPLATE: Add your project-specific setup here
+      # - name: Setup database
+      #   run: |
+      #     docker-compose up -d postgres
+      #     npm run db:migrate
 
-      - name: Start API server
-        run: |
-          npm start &
-          SERVER_PID=$!
-          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+      # - name: Start API server
+      #   run: |
+      #     npm start &
+      #     SERVER_PID=$!
+      #     echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
 
-      - name: Wait for server to be ready
-        run: |
-          timeout 60 bash -c '
-            until curl -f -s http://localhost:3000/health > /dev/null 2>&1; do
-              echo "Waiting for server to start..."
-              sleep 2
-            done
-          '
-          echo "✅ Server is ready!"
+      # - name: Wait for server
+      #   run: |
+      #     timeout 60 bash -c '
+      #       until curl -f http://localhost:3000/health; do
+      #         sleep 2
+      #       done
+      #     '
 
       - name: Authenticate with Postman
         env:
@@ -59,71 +67,45 @@ jobs:
 
       - name: Run Postman collections
         run: |
-          for collection in postman/collections/*.postman_collection.json; do
-            if [ -f "$collection" ]; then
-              echo "📬 Running collection: $(basename "$collection")"
-              postman collection run "$collection" \
-                --reporter cli,json \
-                --reporter-json-export "results-$(basename "$collection" .json).json"
+          echo "📬 Running Postman collections..."
+          echo ""
+          echo "⚠️  This is a template workflow."
+          echo "Customize it to run your collections against your API."
+          echo ""
+          echo "Example:"
+          echo "  postman collection run \\"
+          echo "    postman/collections/your-api.postman_collection.json \\"
+          echo "    --environment postman/environments/dev.postman_environment.json"
+          echo ""
 
-              if [ $? -ne 0 ]; then
-                echo "❌ Collection failed: $collection"
-                exit 1
-              fi
-            fi
-          done
-          echo "✅ All collections passed!"
+          # TEMPLATE: Uncomment and customize for your project
+          # for collection in postman/collections/*.postman_collection.json; do
+          #   if [ -f "$collection" ]; then
+          #     echo "Running: $(basename "$collection")"
+          #     postman collection run "$collection" \
+          #       --environment postman/environments/dev.postman_environment.json \
+          #       --reporter cli,json \
+          #       --reporter-json-export "results-$(basename "$collection").json"
+          #   fi
+          # done
 
-      - name: Upload test results
-        if: always()
-        uses: actions/upload-artifact@v3
-        with:
-          name: postman-results-node-${{ matrix.node-version }}
-          path: results-*.json
-          retention-days: 7
+      # - name: Upload test results
+      #   if: always()
+      #   uses: actions/upload-artifact@v3
+      #   with:
+      #     name: postman-results
+      #     path: results-*.json
 
-      - name: Stop server
-        if: always()
+      # - name: Stop server
+      #   if: always()
+      #   run: kill $SERVER_PID 2>/dev/null || true
+
+      - name: Template reminder
         run: |
-          if [ -n "$SERVER_PID" ]; then
-            kill $SERVER_PID 2>/dev/null || true
-          fi
-
-      - name: Comment on PR with results
-        if: always() && github.event_name == 'pull_request'
-        uses: actions/github-script@v6
-        with:
-          script: |
-            const fs = require('fs');
-            const results = fs.readdirSync('.')
-              .filter(file => file.startsWith('results-') && file.endsWith('.json'));
-
-            let passed = 0;
-            let failed = 0;
-
-            results.forEach(file => {
-              try {
-                const data = JSON.parse(fs.readFileSync(file, 'utf8'));
-                if (data.run && data.run.stats) {
-                  passed += data.run.stats.tests.passed || 0;
-                  failed += data.run.stats.tests.failed || 0;
-                }
-              } catch (e) {
-                console.error(`Error reading ${file}:`, e);
-              }
-            });
-
-            const status = failed === 0 ? '✅' : '❌';
-            const message = `${status} **Postman Collections Test Results (Node ${{ matrix.node-version }})**
-
-            - ✅ Passed: ${passed}
-            - ❌ Failed: ${failed}
-            - 📊 Total: ${passed + failed}
-            `;
-
-            github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: message
-            });
+          echo "✅ Template workflow completed!"
+          echo ""
+          echo "📚 To customize this workflow for your project:"
+          echo "   1. Uncomment and configure the server setup steps"
+          echo "   2. Update collection paths and environment files"
+          echo "   3. Add your API's health check endpoint"
+          echo "   4. See docs/CI_CD.md for detailed examples"

@@ -30,32 +30,32 @@ This cookbook demonstrates how to:
 ### 5-Minute Setup
 
 ```bash
-# 1. Clone this repository (or use your own project)
-git clone <your-repo-url>
-cd <your-repo>
+# 1. Clone this cookbook repository
+git clone https://github.com/Postman-Devrel/Postman-Native-Git-Cookbook.git
+cd Postman-Native-Git-Cookbook
 
 # 2. Install dependencies
 npm install
-# or
-yarn install
 
 # 3. Install and configure Postman CLI
 npm install -g postman-cli
 postman login
 
-# 4. Set up git hooks (automated)
-npm install  # This runs the 'prepare' script which installs husky hooks
+# 4. Explore the templates
+ls -la .husky/          # Git hook templates
+ls -la .github/workflows/  # CI/CD workflow templates
+cat .spectral.yaml      # Spectral linting rules
 
-# 5. Make a test commit to see it in action
-git add .
-git commit -m "test: verify hooks are working"
+# 5. Copy templates to your project
+# Copy the files you need to your own project repository
 ```
 
-That's it! Your pre-commit hook will now automatically:
-- Lint your code
-- Run your tests
-- Validate your Postman collections with Spectral
-- Run Postman collection tests (when collection files change)
+**What's included:**
+- ✅ Git hook templates for pre-commit validation
+- ✅ Spectral rules for collection linting and secret detection
+- ✅ GitHub Actions workflow templates
+- ✅ Example Postman collections demonstrating best practices
+- ✅ Comprehensive documentation guides
 
 ## Workflows & Recipes
 
@@ -475,31 +475,43 @@ npm test || exit 1
 postman collection run || exit 1
 ```
 
-## Examples in This Repository
+## What's in This Repository
 
-This repository includes a working example using the "Intergalactic Bank API":
+This cookbook provides **ready-to-use templates** and **example configurations**:
 
-- **API Server**: Express.js REST API (see `/src`)
-- **Collections**: Banking API collection with tests (see `/postman/collections`)
-- **Tests**: Jest unit and integration tests (see `/tests`)
-- **Hooks**: Complete pre-commit setup (see `/.husky`)
-- **CI/CD**: GitHub Actions workflow (see `/.github/workflows`)
-- **Spectral**: Collection linting rules (see `.spectral.yaml`)
+### Templates & Configuration
 
-### Try It Out
+- **Git Hooks** (`.husky/`): Pre-commit hook template with Spectral linting
+- **GitHub Actions** (`.github/workflows/`): 5 workflow templates for different use cases
+- **Spectral Rules** (`.spectral.yaml`): Collection linting with security checks
+- **Example Collections** (`postman/`): Sample collections demonstrating best practices
+
+### Documentation
+
+- **README.md**: This file - cookbook overview
+- **docs/SETUP.md**: Complete setup instructions
+- **docs/CI_CD.md**: CI/CD integration guide (GitHub Actions, GitLab, CircleCI)
+- **docs/SPECTRAL.md**: Spectral linting and security scanning
+- **docs/COMMIT_HOOKS.md**: Git hooks setup and patterns
+- **docs/TESTING.md**: Testing patterns and strategies
+- **docs/QUICK_REFERENCE.md**: Quick command reference
+
+### How to Use This Cookbook
+
+1. **Clone the repository** to explore the templates
+2. **Read the guides** for your specific workflow needs
+3. **Copy the templates** you need to your own project
+4. **Customize** for your API and requirements
+5. **Test** the workflows with your collections
 
 ```bash
-# Install dependencies
-npm install
+# Example: Copy git hooks to your project
+cp -r Postman-Native-Git-Cookbook/.husky your-project/
+cp Postman-Native-Git-Cookbook/.spectral.yaml your-project/
 
-# Start the API server
-npm start
-
-# In another terminal, run the collection
-postman collection run postman/collections/*.postman_collection.json
-
-# Or run via npm script
-npm run test:api
+# Example: Copy a workflow template
+cp Postman-Native-Git-Cookbook/.github/workflows/spectral-lint.yaml \
+   your-project/.github/workflows/
 ```
 
 ## Contributing
