@@ -1,0 +1,38 @@
+type: http
+name: Create Account
+description: |
+  Create a new bank account.
+  
+  ## Required Fields
+  - `owner`: Account owner name (string)
+  - `currency`: One of COSMIC_COINS, GALAXY_GOLD, MOON_BUCKS
+  
+  ## Optional Fields
+  - `balance`: Initial balance (non-negative number, defaults to 0)
+  - `accountType`: One of STANDARD, PREMIUM, BUSINESS (defaults to STANDARD)
+method: POST
+url: "{{baseUrl}}/api/v1/accounts"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |
+    {
+      "owner": "John Doe",
+      "currency": "COSMIC_COINS",
+      "balance": 1000,
+      "accountType": "STANDARD"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |
+      // Store the created account ID in collection variable
+      if (pm.response.code === 201) {
+          const response = pm.response.json();
+          if (response.account && response.account.accountId) {
+              pm.collectionVariables.set("accountId", response.account.accountId);
+              console.log("Account ID stored in collection variable: accountId");
+          }
+      }

@@ -1,0 +1,22 @@
+type: http
+name: Generate API Key
+description: |
+  Generate a new API key for authentication.
+  
+  The returned API key should be used in the `x-api-key` header for all authenticated requests.
+method: GET
+url: "{{baseUrl}}/api/v1/auth"
+auth:
+  type: noauth
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |
+      // Store the generated API key in collection variable
+      if (pm.response.code === 200) {
+          const response = pm.response.json();
+          if (response.apiKey) {
+              pm.collectionVariables.set("apiKey", response.apiKey);
+              console.log("API Key stored in collection variable: apiKey");
+          }
+      }

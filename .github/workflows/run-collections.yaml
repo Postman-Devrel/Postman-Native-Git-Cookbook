@@ -1,0 +1,129 @@
+name: Run Postman Collections
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+  workflow_dispatch:  # Allow manual trigger
+
+jobs:
+  test-collections:
+    name: Test Collections
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18, 20]
+      fail-fast: false
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Postman CLI
+        run: curl -o- "https://dl-cli.pstmn.io/install/unix.sh" | sh
+
+      - name: Run unit and integration tests
+        run: npm test
+
+      - name: Start API server
+        run: |
+          npm start &
+          SERVER_PID=$!
+          echo "SERVER_PID=$SERVER_PID" >> $GITHUB_ENV
+
+      - name: Wait for server to be ready
+        run: |
+          timeout 60 bash -c '
+            until curl -f -s http://localhost:3000/health > /dev/null 2>&1; do
+              echo "Waiting for server to start..."
+              sleep 2
+            done
+          '
+          echo "✅ Server is ready!"
+
+      - name: Authenticate with Postman
+        env:
+          POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+        run: postman login --with-api-key "$POSTMAN_API_KEY"
+
+      - name: Run Postman collections
+        run: |
+          for collection in postman/collections/*.postman_collection.json; do
+            if [ -f "$collection" ]; then
+              echo "📬 Running collection: $(basename "$collection")"
+              postman collection run "$collection" \
+                --reporter cli,json \
+                --reporter-json-export "results-$(basename "$collection" .json).json"
+
+              if [ $? -ne 0 ]; then
+                echo "❌ Collection failed: $collection"
+                exit 1
+              fi
+            fi
+          done
+          echo "✅ All collections passed!"
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: postman-results-node-${{ matrix.node-version }}
+          path: results-*.json
+          retention-days: 7
+
+      - name: Stop server
+        if: always()
+        run: |
+          if [ -n "$SERVER_PID" ]; then
+            kill $SERVER_PID 2>/dev/null || true
+          fi
+
+      - name: Comment on PR with results
+        if: always() && github.event_name == 'pull_request'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const fs = require('fs');
+            const results = fs.readdirSync('.')
+              .filter(file => file.startsWith('results-') && file.endsWith('.json'));
+
+            let passed = 0;
+            let failed = 0;
+
+            results.forEach(file => {
+              try {
+                const data = JSON.parse(fs.readFileSync(file, 'utf8'));
+                if (data.run && data.run.stats) {
+                  passed += data.run.stats.tests.passed || 0;
+                  failed += data.run.stats.tests.failed || 0;
+                }
+              } catch (e) {
+                console.error(`Error reading ${file}:`, e);
+              }
+            });
+
+            const status = failed === 0 ? '✅' : '❌';
+            const message = `${status} **Postman Collections Test Results (Node ${{ matrix.node-version }})**
+
+            - ✅ Passed: ${passed}
+            - ❌ Failed: ${failed}
+            - 📊 Total: ${passed + failed}
+            `;
+
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: message
+            });

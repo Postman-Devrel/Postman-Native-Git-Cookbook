@@ -1,0 +1,30 @@
+{
+  "endpoints": {
+    "/api/v1/accounts": {
+      "post": "import { CreateAccountRequest, SdkGenerator } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  \n  const createAccountRequest: CreateAccountRequest = {\t\n    owner: \"John Doe\",\n    currency: \"COSMIC_COINS\",\n    balance: 1000,\n    accountType: \"STANDARD\"\n  };\n\n  const { data } = await sdkGenerator.accounts.createAccount(createAccountRequest);\n\n  console.log(data);\n})();\n",
+      "get": "import { SdkGenerator } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  const { data } = await sdkGenerator.accounts.listAccounts();\n\n  console.log(data);\n})();\n"
+    },
+    "/api/v1/accounts/{accountId}": {
+      "delete": "import { SdkGenerator } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  const { data } = await sdkGenerator.accounts.deleteAccount(\"{{accountId}}\");\n\n  console.log(data);\n})();\n",
+      "get": "import { SdkGenerator } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  const { data } = await sdkGenerator.accounts.getAccount(\"{{accountId}}\");\n\n  console.log(data);\n})();\n",
+      "put": "import { SdkGenerator, UpdateAccountRequest } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  \n  const updateAccountRequest: UpdateAccountRequest = {\t\n    owner: \"Jane Doe\",\n    accountType: \"PREMIUM\"\n  };\n\n  const { data } = await sdkGenerator.accounts.updateAccount(\n  \"{{accountId}}\",\n  updateAccountRequest\n);\n\n  console.log(data);\n})();\n"
+    },
+    "/api/v1/auth": {
+      "get": "import { SdkGenerator } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  const { data } = await sdkGenerator.authentication.generateApiKey();\n\n  console.log(data);\n})();\n"
+    },
+    "/health": {
+      "get": "import { SdkGenerator } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  const { data } = await sdkGenerator.general.healthCheck();\n\n  console.log(data);\n})();\n"
+    },
+    "/": {
+      "get": "import { SdkGenerator } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  const { data } = await sdkGenerator.general.welcome();\n\n  console.log(data);\n})();\n"
+    },
+    "/api/v1/transactions": {
+      "post": "import { CreateTransactionRequest, SdkGenerator } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  \n  const createTransactionRequest: CreateTransactionRequest = {\t\n    fromAccountId: \"0\",\n    toAccountId: \"{{accountId}}\",\n    amount: 500,\n    currency: \"COSMIC_COINS\"\n  };\n\n  const { data } = await sdkGenerator.transactions.createTransaction(createTransactionRequest);\n\n  console.log(data);\n})();\n",
+      "get": "import { SdkGenerator } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  const { data } = await sdkGenerator.transactions.listTransactions();\n\n  console.log(data);\n})();\n"
+    },
+    "/api/v1/transactions/{transactionId}": {
+      "get": "import { SdkGenerator } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  const { data } = await sdkGenerator.transactions.getTransaction(\"{{transactionId}}\");\n\n  console.log(data);\n})();\n"
+    }
+  },
+  "example": "import { SdkGenerator } from 'sdk-generator';\n\n(async () => {\n  const sdkGenerator = new SdkGenerator({});\n\n  const { data } = await sdkGenerator.accounts.listAccounts();\n\n  console.log(data);\n})();\n"
+}

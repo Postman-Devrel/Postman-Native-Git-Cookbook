@@ -1,0 +1,9 @@
+type: http
+name: Get Transaction
+description: Get details of a specific transaction by ID.
+method: GET
+url: "{{baseUrl}}/api/v1/transactions/{{transactionId}}"
+pathVariables:
+  - key: transactionId
+    value: "{{transactionId}}"
+    description: The unique identifier of the transaction

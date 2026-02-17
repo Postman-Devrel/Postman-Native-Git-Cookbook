@@ -1,0 +1,7 @@
+type: http
+name: Health Check
+description: Check the health status of the API server
+method: GET
+url: "{{baseUrl}}/health"
+auth:
+  type: noauth

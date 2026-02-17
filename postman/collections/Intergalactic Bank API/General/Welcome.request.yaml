@@ -1,0 +1,7 @@
+type: http
+name: Welcome
+description: Get welcome message and API information
+method: GET
+url: "{{baseUrl}}/"
+auth:
+  type: noauth

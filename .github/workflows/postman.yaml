@@ -1,0 +1,32 @@
+name: Publish to Postman Workspace
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  postman:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "yarn"
+
+      - run: curl -o- "https://dl-cli.pstmn.io/install/unix.sh" | sh
+
+      - name: Validate and sync
+        env:
+          POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+        run: |
+          postman login --with-api-key "$POSTMAN_API_KEY"
+          yarn install --frozen-lockfile
+          yarn start &
+          sleep 3
+          yarn test:api
+          postman workspace push -y

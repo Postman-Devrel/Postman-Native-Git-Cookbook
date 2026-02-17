@@ -1,0 +1,13 @@
+type: http
+name: Delete Account
+description: |
+  Delete an account (soft delete).
+  
+  Users can only delete their own accounts.
+  Accounts with transactions are soft-deleted to preserve transaction history.
+method: DELETE
+url: "{{baseUrl}}/api/v1/accounts/{{accountId}}"
+pathVariables:
+  - key: accountId
+    value: "{{accountId}}"
+    description: The unique identifier of the account to delete

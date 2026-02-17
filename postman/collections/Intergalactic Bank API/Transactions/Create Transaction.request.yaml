@@ -1,0 +1,41 @@
+type: http
+name: Create Transaction
+description: |
+  Create a new transaction (transfer or deposit).
+  
+  ## Required Fields
+  - `fromAccountId`: Source account ID (use "0" for deposits from external source)
+  - `toAccountId`: Destination account ID
+  - `amount`: Transaction amount (positive number)
+  - `currency`: Must match the account currency (COSMIC_COINS, GALAXY_GOLD, or MOON_BUCKS)
+  
+  ## Validation Rules
+  - Source account must have sufficient funds (for transfers)
+  - Currency must match both source and destination accounts
+  - Amount must be a positive number
+method: POST
+url: "{{baseUrl}}/api/v1/transactions"
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |
+    {
+      "fromAccountId": "0",
+      "toAccountId": "{{accountId}}",
+      "amount": 500,
+      "currency": "COSMIC_COINS"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |
+      // Store the created transaction ID in collection variable
+      if (pm.response.code === 201) {
+          const response = pm.response.json();
+          if (response.transaction && response.transaction.transactionId) {
+              pm.collectionVariables.set("transactionId", response.transaction.transactionId);
+              console.log("Transaction ID stored in collection variable: transactionId");
+          }
+      }

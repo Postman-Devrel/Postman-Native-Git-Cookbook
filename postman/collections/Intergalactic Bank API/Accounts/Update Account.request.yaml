@@ -1,0 +1,32 @@
+type: http
+name: Update Account
+description: |
+  Update an existing account.
+  
+  Users can only update their own accounts.
+  
+  ## Updatable Fields
+  - `owner`: Account owner name
+  - `accountType`: One of STANDARD, PREMIUM, BUSINESS
+  
+  ## Non-Updatable Fields
+  - `balance`: Cannot be updated directly (use transactions)
+  - `accountId`: Immutable
+  - `createdAt`: Immutable
+  - `currency`: Immutable
+method: PUT
+url: "{{baseUrl}}/api/v1/accounts/{{accountId}}"
+headers:
+  - key: Content-Type
+    value: application/json
+pathVariables:
+  - key: accountId
+    value: "{{accountId}}"
+    description: The unique identifier of the account
+body:
+  type: json
+  content: |
+    {
+      "owner": "Jane Doe",
+      "accountType": "PREMIUM"
+    }

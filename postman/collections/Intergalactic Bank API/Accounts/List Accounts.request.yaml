@@ -1,0 +1,19 @@
+type: http
+name: List Accounts
+description: |
+  List all accounts owned by the authenticated user.
+  
+  ## Query Parameters
+  - `owner` (optional): Filter by owner name
+  - `createdAt` (optional): Filter by creation date
+method: GET
+url: "{{baseUrl}}/api/v1/accounts"
+queryParams:
+  - key: owner
+    value: ""
+    description: Filter by owner name
+    disabled: true
+  - key: createdAt
+    value: ""
+    description: Filter by creation date (YYYY-MM-DD)
+    disabled: true

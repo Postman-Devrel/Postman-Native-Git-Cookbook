@@ -1,0 +1,192 @@
+name: Scheduled API Health Check
+
+on:
+  schedule:
+    # Run every 6 hours
+    - cron: '0 */6 * * *'
+  workflow_dispatch:  # Allow manual trigger
+    inputs:
+      environment:
+        description: 'Environment to test'
+        required: true
+        default: 'production'
+        type: choice
+        options:
+          - development
+          - staging
+          - production
+
+jobs:
+  health-check:
+    name: API Health Check
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install Postman CLI
+        run: curl -o- "https://dl-cli.pstmn.io/install/unix.sh" | sh
+
+      - name: Authenticate with Postman
+        env:
+          POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
+        run: postman login --with-api-key "$POSTMAN_API_KEY"
+
+      - name: Determine environment
+        id: env
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "environment=${{ inputs.environment }}" >> $GITHUB_OUTPUT
+          else
+            echo "environment=production" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Run health check collection
+        id: health-check
+        continue-on-error: true
+        run: |
+          echo "🏥 Running health check for ${{ steps.env.outputs.environment }} environment..."
+
+          postman collection run \
+            postman/collections/*.postman_collection.json \
+            --folder "Health Check" \
+            --environment postman/environments/${{ steps.env.outputs.environment }}.postman_environment.json \
+            --reporter cli,json \
+            --reporter-json-export health-check-results.json
+
+      - name: Analyze results
+        if: always()
+        id: analyze
+        run: |
+          if [ -f health-check-results.json ]; then
+            echo "📊 Analyzing health check results..."
+
+            # Extract test statistics using jq
+            TOTAL=$(cat health-check-results.json | jq '.run.stats.tests.total // 0')
+            PASSED=$(cat health-check-results.json | jq '.run.stats.tests.passed // 0')
+            FAILED=$(cat health-check-results.json | jq '.run.stats.tests.failed // 0')
+
+            echo "total=$TOTAL" >> $GITHUB_OUTPUT
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED" >> $GITHUB_OUTPUT
+
+            if [ "$FAILED" -gt 0 ]; then
+              echo "status=❌ FAILED" >> $GITHUB_OUTPUT
+              echo "health_status=unhealthy" >> $GITHUB_OUTPUT
+            else
+              echo "status=✅ PASSED" >> $GITHUB_OUTPUT
+              echo "health_status=healthy" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "status=⚠️ NO RESULTS" >> $GITHUB_OUTPUT
+            echo "health_status=unknown" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Create GitHub Issue on Failure
+        if: steps.analyze.outputs.health_status == 'unhealthy'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const date = new Date().toISOString();
+            const env = '${{ steps.env.outputs.environment }}';
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'health-check,automated',
+              state: 'open'
+            });
+
+            // Check if there's already an open health check issue
+            const existingIssue = issues.find(issue =>
+              issue.title.includes(`API Health Check Failed - ${env}`)
+            );
+
+            const body = `## 🚨 API Health Check Failed
+
+            **Environment:** ${env}
+            **Time:** ${date}
+            **Status:** ${{ steps.analyze.outputs.status }}
+
+            ### Test Results
+            - Total Tests: ${{ steps.analyze.outputs.total }}
+            - ✅ Passed: ${{ steps.analyze.outputs.passed }}
+            - ❌ Failed: ${{ steps.analyze.outputs.failed }}
+
+            ### Action Required
+            Please investigate the API health issues immediately.
+
+            **Workflow Run:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+
+            ---
+            *This issue was automatically created by the health check workflow.*
+            `;
+
+            if (existingIssue) {
+              // Add comment to existing issue
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: existingIssue.number,
+                body: body
+              });
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `🚨 API Health Check Failed - ${env}`,
+                body: body,
+                labels: ['bug', 'health-check', 'automated', 'priority-high']
+              });
+            }
+
+      - name: Close issue on success
+        if: steps.analyze.outputs.health_status == 'healthy'
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const env = '${{ steps.env.outputs.environment }}';
+
+            const { data: issues } = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: 'health-check,automated',
+              state: 'open'
+            });
+
+            const healthCheckIssue = issues.find(issue =>
+              issue.title.includes(`API Health Check Failed - ${env}`)
+            );
+
+            if (healthCheckIssue) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: healthCheckIssue.number,
+                body: '✅ **Health check is now passing!**\n\nThe API has recovered. Closing this issue.'
+              });
+
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: healthCheckIssue.number,
+                state: 'closed'
+              });
+            }
+
+      - name: Upload results
+        if: always()
+        uses: actions/upload-artifact@v3
+        with:
+          name: health-check-results-${{ steps.env.outputs.environment }}
+          path: health-check-results.json
+          retention-days: 14
+
+      - name: Send notification (optional)
+        if: steps.analyze.outputs.health_status == 'unhealthy'
+        run: |
+          echo "📧 Health check failed. Notifications can be configured here."
+          echo "Examples: Slack, email, PagerDuty, etc."
+          # Integrate with your notification service here

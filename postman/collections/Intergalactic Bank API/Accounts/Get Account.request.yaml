@@ -1,0 +1,12 @@
+type: http
+name: Get Account
+description: |
+  Get details of a specific account by ID.
+  
+  Users can only access their own accounts.
+method: GET
+url: "{{baseUrl}}/api/v1/accounts/{{accountId}}"
+pathVariables:
+  - key: accountId
+    value: "{{accountId}}"
+    description: The unique identifier of the account

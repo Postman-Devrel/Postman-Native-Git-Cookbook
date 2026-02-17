@@ -1,0 +1,24 @@
+type: http
+name: List Transactions
+description: |
+  List all transactions with optional filters.
+  
+  ## Query Parameters
+  - `fromAccountId` (optional): Filter by source account
+  - `toAccountId` (optional): Filter by destination account
+  - `createdAt` (optional): Filter by creation date
+method: GET
+url: "{{baseUrl}}/api/v1/transactions"
+queryParams:
+  - key: fromAccountId
+    value: ""
+    description: Filter by source account ID
+    disabled: true
+  - key: toAccountId
+    value: ""
+    description: Filter by destination account ID
+    disabled: true
+  - key: createdAt
+    value: ""
+    description: Filter by creation date (YYYY-MM-DD)
+    disabled: true

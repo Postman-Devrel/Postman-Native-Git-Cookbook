@@ -1,0 +1,10 @@
+type: folder
+name: Transactions
+description: |
+  Endpoints for managing transactions between accounts.
+  
+  All endpoints require authentication via API key.
+  
+  ## Transaction Types
+  - **Transfer**: Move funds between two accounts (fromAccountId != "0")
+  - **Deposit**: Add funds from external source (fromAccountId = "0")

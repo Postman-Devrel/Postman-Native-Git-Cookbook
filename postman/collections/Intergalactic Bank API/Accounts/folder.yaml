@@ -1,0 +1,7 @@
+type: folder
+name: Accounts
+description: |
+  Endpoints for managing bank accounts.
+  
+  All endpoints require authentication via API key.
+  Users can only access their own accounts (based on API key ownership).
