@@ -1,5 +1,11 @@
 #!/usr/bin/env node
 
+/**
+ * Lint all Postman collection files in postman/collections/ using Spectral,
+ * mapping output to original filenames for improved error clarity in CI/CD or pre-commit hooks.
+ * Handles temp copies to allow for meaningful, short error reporting.
+ */
+
 const { execSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
@@ -13,7 +19,6 @@ if (collectionFiles.length === 0) {
   process.exit(0);
 }
 
-// Workaround: Spectral has issues with files in postman/ directory
 // Copy files to temp location, lint them, then map results back
 const tmpDir = path.join(__dirname, 'tmp');
 if (!fs.existsSync(tmpDir)) {

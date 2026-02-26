@@ -4,7 +4,6 @@
   "description": "A comprehensive cookbook for integrating Postman collections into your development workflows using Native Git capabilities",
   "scripts": {
     "lint:collections": "node .spectral/lint-with-names.js",
-    "lint:specs": "spectral lint 'postman/specs/**/*.yaml' 'postman/specs/**/*.json' --ruleset .spectral-openapi.yaml --fail-severity error",
     "prepare": "husky install"
   },
   "keywords": [
