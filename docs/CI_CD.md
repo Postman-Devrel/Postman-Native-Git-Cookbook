@@ -179,43 +179,62 @@ jobs:
 
 #### Workflow 2: Multi-Environment Testing
 
+The cookbook includes a ready-to-use multi-environment workflow at `.github/workflows/multi-env.yaml`. It runs collections against `dev` and `staging` in parallel using a matrix strategy, then publishes to Postman Cloud only after all environments pass.
+
 ```yaml
 name: Multi-Environment Tests
 
 on:
+  push:
+    branches: [main]
   pull_request:
     branches: [main]
 
 jobs:
-  test:
-    name: Test on ${{ matrix.environment }}
+  run-collections:
     runs-on: ubuntu-latest
     strategy:
+      fail-fast: false  # let all environments run even if one fails
       matrix:
-        environment: [development, staging, production]
+        environment: [dev, staging]
 
     steps:
       - uses: actions/checkout@v4
-
       - uses: actions/setup-node@v4
         with:
           node-version: '20'
-
+          cache: 'npm'
       - run: npm ci
-
       - name: Install Postman CLI
         run: curl -o- "https://dl-cli.pstmn.io/install/unix.sh" | sh
-
-      - name: Run collections against ${{ matrix.environment }}
+      - name: Authenticate with Postman
         env:
           POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
-          ENVIRONMENT: ${{ matrix.environment }}
+        run: postman login --with-api-key "$POSTMAN_API_KEY"
+      - name: Run collections against ${{ matrix.environment }}
+        run: |
+          for collection in postman/collections/*.postman_collection.json; do
+            postman collection run "$collection" \
+              --environment "postman/environments/${{ matrix.environment }}.postman_environment.json"
+          done
+
+  publish:
+    needs: run-collections
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install Postman CLI
+        run: curl -o- "https://dl-cli.pstmn.io/install/unix.sh" | sh
+      - name: Publish workspace to Postman Cloud
+        env:
+          POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
         run: |
           postman login --with-api-key "$POSTMAN_API_KEY"
-          postman collection run \
-            postman/collections/*.postman_collection.json \
-            --environment postman/environments/$ENVIRONMENT.postman_environment.json
+          postman workspace push -y
 ```
+
+Copy the full template from `.github/workflows/multi-env.yaml`.
 
 #### Workflow 3: Scheduled Health Checks
 
@@ -259,6 +278,10 @@ jobs:
 
 #### Workflow 4: Publish to Postman Workspace
 
+`postman workspace push` is the handoff from git to Postman Cloud — the moment a validated, merged state becomes visible to consumers. It only runs on merges to `main`, never on PRs.
+
+See **[WORKSPACE_PUSH.md](./WORKSPACE_PUSH.md)** for the full reference: what the command does, failure handling, the `-y` flag, and how to verify the Cloud View updated.
+
 ```yaml
 name: Publish to Postman
 
@@ -275,15 +298,12 @@ jobs:
       - name: Install Postman CLI
         run: curl -o- "https://dl-cli.pstmn.io/install/unix.sh" | sh
 
-      - name: Authenticate and Publish
+      - name: Publish workspace to Postman Cloud
         env:
           POSTMAN_API_KEY: ${{ secrets.POSTMAN_API_KEY }}
         run: |
           postman login --with-api-key "$POSTMAN_API_KEY"
           postman workspace push -y
-
-      - name: Notify team
-        run: echo "Collections published to Postman workspace"
 ```
 
 ## GitLab CI

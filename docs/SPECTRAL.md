@@ -1,6 +1,15 @@
-# Spectral Linting for Postman Collections
+# Spectral Linting
 
-A comprehensive guide to using Spectral to lint, validate, and enforce best practices in your Postman collections.
+A guide to using Spectral to lint Postman collections and OpenAPI specs in the Native Git workflow.
+
+This cookbook ships two separate Spectral configurations:
+
+| Config | Targets | Command |
+|---|---|---|
+| `.spectral.yaml` | `postman/collections/` only | `npm run lint:collections` |
+| `.spectral-openapi.yaml` | `postman/specs/` only | `npm run lint:specs` |
+
+Keep them separate. Collection rules use Postman-specific JSONPath selectors that are meaningless against OpenAPI files, and vice versa.
 
 ## Table of Contents
 
@@ -9,6 +18,7 @@ A comprehensive guide to using Spectral to lint, validate, and enforce best prac
 - [Quick Start](#quick-start)
 - [Configuration](#configuration)
 - [Built-in Rules](#built-in-rules)
+- [Linting OpenAPI Specs](#linting-openapi-specs)
 - [Custom Rules](#custom-rules)
 - [Secret Detection](#secret-detection)
 - [Running Spectral](#running-spectral)
@@ -232,6 +242,42 @@ request-tests-have-scripts:
 ### Security Rules
 
 See [Secret Detection](#secret-detection) section for detailed security rules.
+
+## Linting OpenAPI Specs
+
+Use `.spectral-openapi.yaml` to lint OpenAPI specs stored in `postman/specs/`. This config extends Spectral's built-in `spectral:oas` ruleset and targets OpenAPI files only — it does not run against collections or environments.
+
+```bash
+npm run lint:specs
+```
+
+**What it enforces:**
+
+| Rule | Severity | What it checks |
+|---|---|---|
+| `info-description` | error | Spec must have a top-level description |
+| `info-contact` | warn | Spec should include contact info |
+| `operation-summary` | error | Every operation must have a summary |
+| `operation-tags` | error | Every operation must have at least one tag |
+| `operation-tag-defined` | error | Tags used must be defined at the top level |
+| `operation-operationId` | error | Every operation must have a unique ID |
+| `operation-operationId-valid-in-url` | error | Operation IDs must be URL-safe |
+| `operation-success-response` | error | Every operation must define at least one success response |
+| `operation-parameters` | warn | Parameters should have descriptions |
+| `no-$ref-siblings` | error | No properties alongside a `$ref` |
+| `path-not-include-query` | error | Query params belong in `parameters`, not the path |
+
+**Customizing:**
+
+Edit `.spectral-openapi.yaml` to adjust severities or disable rules:
+
+```yaml
+rules:
+  info-contact: off          # disable if not needed
+  operation-description: error  # promote from warn to error
+```
+
+---
 
 ## Custom Rules
 
@@ -502,16 +548,12 @@ spectral lint postman/collections/*.json --fail-severity warn
 
 ### NPM Scripts
 
-Add to `package.json`:
+```bash
+# Lint collections (uses .spectral.yaml via lint-with-names.js)
+npm run lint:collections
 
-```json
-{
-  "scripts": {
-    "lint:collections": "spectral lint postman/collections/*.postman_collection.json",
-    "lint:collections:json": "spectral lint postman/collections/*.json --format json",
-    "lint:collections:fix": "echo 'Spectral does not support auto-fix. Review errors manually.'"
-  }
-}
+# Lint OpenAPI specs in postman/specs/ (uses .spectral-openapi.yaml)
+npm run lint:specs
 ```
 
 ### Enhanced Custom Script

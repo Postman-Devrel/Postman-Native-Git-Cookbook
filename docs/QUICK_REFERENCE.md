@@ -8,22 +8,24 @@
 ✅ **lint-staged** - Run linter on staged files only  
 ✅ **Postman CLI** - API testing tool (ready to activate)
 
-## 🚀 Quick Commands
+## Quick Commands
 
 ```bash
-# Run linter
-npm run lint              # Check all files
-npm run lint:fix          # Auto-fix issues
+# Lint Postman collections (uses .spectral.yaml)
+npm run lint:collections
 
-# Run tests
-npm test                  # All tests with coverage
-npm run test:unit         # Unit tests only
-npm run test:integration  # Integration tests only
-npm run test:api          # Postman tests (after setup)
+# Lint OpenAPI specs in postman/specs/ (uses .spectral-openapi.yaml)
+npm run lint:specs
+
+# Install git hooks
+npm run prepare
 
 # Git operations
-git commit -m "message"   # Runs hooks automatically
+git commit -m "message"   # Runs pre-commit hook automatically
 git commit --no-verify    # Skip hooks (emergency only)
+
+# Publish to Postman Cloud (only run on main, not manually)
+postman workspace push -y
 ```
 
 ## 📬 Activate Postman CLI in Pre-Commit
@@ -52,15 +54,18 @@ cat .husky/pre-commit-examples.sh
 # Pick one and copy to .husky/pre-commit
 ```
 
-## 📚 Documentation Files
+## Documentation Files
 
 | File | Purpose |
 |------|---------|
-| `COMMIT_HOOKS.md` | Overview of git hooks setup |
-| `POSTMAN_CLI_GUIDE.md` | Complete Postman CLI guide with examples |
-| `.husky/README.md` | Hooks directory documentation |
+| `SETUP.md` | Initial setup from scratch |
+| `COMMIT_HOOKS.md` | Git hooks setup and patterns |
+| `CI_CD.md` | GitHub Actions, GitLab CI, CircleCI templates |
+| `SPECTRAL.md` | Spectral linting for collections and OpenAPI specs |
+| `WORKSPACE_PUSH.md` | `postman workspace push` reference |
+| `TESTING.md` | Testing patterns and strategies |
 | `.husky/pre-commit-examples.sh` | 10 ready-to-use hook patterns |
-| `QUICK_REFERENCE.md` | This file - quick commands |
+| `QUICK_REFERENCE.md` | This file |
 
 ## 🔧 First Time Postman Setup
 

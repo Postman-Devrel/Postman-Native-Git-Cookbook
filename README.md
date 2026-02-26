@@ -160,44 +160,27 @@ Use Spectral to lint your Postman collections and enforce organizational standar
 
 ```bash
 # Lint all collections
-spectral lint postman/collections/*.postman_collection.json
-
-# Or use the custom script (shows request names)
 npm run lint:collections
+
+# Lint OpenAPI specs
+npm run lint:specs
 ```
 
-**Example Rules:**
+The cookbook ships two separate Spectral configs:
 
-```yaml
-# .spectral.yaml
-rules:
-  request-tests-recommended:
-    description: Request should include test scripts
-    given: $..item[?(@.request)]
-    severity: warn
-    then:
-      field: event
-      function: truthy
-
-  no-hardcoded-apikey-header:
-    description: API key headers must use variables
-    given: $..header[?(@.key == 'x-api-key')]
-    severity: error
-    then:
-      field: value
-      function: pattern
-      functionOptions:
-        match: "^\\{\\{.*\\}\\}$"
-```
+| Config | Targets | Command |
+|---|---|---|
+| `.spectral.yaml` | `postman/collections/` only | `npm run lint:collections` |
+| `.spectral-openapi.yaml` | `postman/specs/` only | `npm run lint:specs` |
 
 **What this does:**
-- Validates collection structure and completeness
-- Ensures requests have test scripts
-- Warns about missing descriptions
-- Checks for proper variable usage
+- Validates collection structure, test coverage, and descriptions
+- Enforces OpenAPI standards (operation IDs, tags, summaries, response codes)
+- Detects hardcoded credentials before they reach git
 
 **See also:**
-- [Spectral Configuration](./.spectral.yaml)
+- [Collection Spectral Configuration](./.spectral.yaml)
+- [OpenAPI Spectral Configuration](./.spectral-openapi.yaml)
 - [Custom Linting Script](./.spectral/lint-with-names.js)
 
 ---
@@ -249,25 +232,32 @@ postman/collections/example.postman_collection.json
 .
 ├── .github/
 │   └── workflows/
-│       └── postman.yaml              # GitHub Actions workflow
+│       ├── postman.yaml              # Main CI workflow template
+│       ├── multi-env.yaml            # Multi-environment matrix runner
+│       ├── run-collections.yaml      # Collection runner template
+│       ├── scheduled-health-check.yaml
+│       ├── secret-scan.yaml
+│       └── spectral-lint.yaml
 ├── .husky/
 │   ├── pre-commit                    # Active pre-commit hook
 │   ├── pre-commit-examples.sh        # 10 hook pattern examples
 │   └── README.md                     # Hooks documentation
 ├── .spectral/
 │   └── lint-with-names.js            # Enhanced Spectral linting script
-├── .spectral.yaml                    # Spectral rules configuration
+├── .spectral.yaml                    # Spectral rules for collections
+├── .spectral-openapi.yaml            # Spectral rules for OpenAPI specs
 ├── docs/
 │   ├── CI_CD.md                      # CI/CD integration guide
 │   ├── COMMIT_HOOKS.md               # Git hooks setup guide
 │   ├── QUICK_REFERENCE.md            # Quick command reference
 │   ├── SETUP.md                      # Initial setup instructions
 │   ├── SPECTRAL.md                   # Spectral linting guide
-│   └── TESTING.md                    # Testing guide
+│   ├── TESTING.md                    # Testing guide
+│   └── WORKSPACE_PUSH.md             # postman workspace push reference
 ├── postman/
 │   ├── collections/                  # Your Postman collections
 │   ├── environments/                 # Environment files
-│   └── globals/                      # Global variables
+│   └── specs/                        # OpenAPI/AsyncAPI specs
 ├── package.json                      # Project dependencies & scripts
 └── README.md                         # This file
 ```
@@ -275,20 +265,9 @@ postman/collections/example.postman_collection.json
 ## Available NPM Scripts
 
 ```bash
-# Code Quality
-npm run lint              # Lint JavaScript files
-npm run lint:fix          # Auto-fix linting issues
+# Linting
 npm run lint:collections  # Lint Postman collections with Spectral
-
-# Testing
-npm test                  # Run all tests
-npm run test:unit         # Run unit tests only
-npm run test:integration  # Run integration tests only
-npm run test:api          # Run Postman collections
-
-# Development
-npm start                 # Start the API server
-npm run dev               # Start with auto-reload
+npm run lint:specs        # Lint OpenAPI specs in postman/specs/ with Spectral
 
 # Git Hooks
 npm run prepare           # Install husky hooks (runs automatically on npm install)
@@ -482,8 +461,9 @@ This cookbook provides **ready-to-use templates** and **example configurations**
 ### Templates & Configuration
 
 - **Git Hooks** (`.husky/`): Pre-commit hook template with Spectral linting
-- **GitHub Actions** (`.github/workflows/`): 5 workflow templates for different use cases
+- **GitHub Actions** (`.github/workflows/`): Workflow templates including multi-environment matrix runner
 - **Spectral Rules** (`.spectral.yaml`): Collection linting with security checks
+- **OpenAPI Spectral Rules** (`.spectral-openapi.yaml`): OpenAPI spec linting (targets `postman/specs/` only)
 - **Example Collections** (`postman/`): Sample collections demonstrating best practices
 
 ### Documentation
@@ -491,10 +471,11 @@ This cookbook provides **ready-to-use templates** and **example configurations**
 - **README.md**: This file - cookbook overview
 - **docs/SETUP.md**: Complete setup instructions
 - **docs/CI_CD.md**: CI/CD integration guide (GitHub Actions, GitLab, CircleCI)
-- **docs/SPECTRAL.md**: Spectral linting and security scanning
+- **docs/SPECTRAL.md**: Spectral linting for collections and OpenAPI specs
 - **docs/COMMIT_HOOKS.md**: Git hooks setup and patterns
 - **docs/TESTING.md**: Testing patterns and strategies
 - **docs/QUICK_REFERENCE.md**: Quick command reference
+- **docs/WORKSPACE_PUSH.md**: `postman workspace push` reference — the handoff from git to Postman Cloud
 
 ### How to Use This Cookbook
 
