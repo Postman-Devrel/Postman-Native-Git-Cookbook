@@ -20,6 +20,7 @@ on:
 jobs:
   run-collections:
     runs-on: ubuntu-latest
+    timeout-minutes: 8
 
     strategy:
       fail-fast: false   # let all environments run even if one fails
@@ -75,6 +76,7 @@ jobs:
   # Runs after all matrix jobs pass. Only publishes on merge to main.
   publish:
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     needs: run-collections
     if: github.ref == 'refs/heads/main' && github.event_name == 'push'
 

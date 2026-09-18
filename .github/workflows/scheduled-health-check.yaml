@@ -23,6 +23,7 @@ jobs:
   health-check:
     name: API Health Check
     runs-on: ubuntu-latest
+    timeout-minutes: 10
 
     steps:
       - name: Checkout code
