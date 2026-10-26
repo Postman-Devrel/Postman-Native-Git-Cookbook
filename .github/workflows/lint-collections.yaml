@@ -11,6 +11,7 @@ jobs:
   lint-collections:
     name: Lint collections (Spectral)
     runs-on: ubuntu-latest
+    timeout-minutes: 8
 
     steps:
       - name: Checkout code
